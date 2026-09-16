@@ -1,0 +1,17 @@
+# Editor files
+.idea
+todo.md
+
+# Environment file
+.env
+
+# Config files
+src/samba/users.conf
+src/samba/smb.conf
+src/donetick/selfhosted.yml
+
+# Logs
+logs
+
+# test folder
+testdata

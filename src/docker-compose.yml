@@ -1,0 +1,161 @@
+services:
+  netdata:
+    image: netdata/netdata:v2.9.0
+    container_name: netdata
+    ports:
+      - "19999:19999"
+    volumes:
+      - ${DATA_ROOT}/netdata/config:/etc/netdata
+      - ${DATA_ROOT}/netdata/lib:/var/lib/netdata
+      - ${DATA_ROOT}/netdata/cache:/var/cache/netdata
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /etc/passwd:/host/etc/passwd:ro
+    cap_add:
+      - SYS_PTRACE
+    security_opt:
+      - apparmor=unconfined
+    restart: unless-stopped
+    networks:
+      - monitoring
+
+  prometheus:
+    image: prom/prometheus:v3
+    container_name: prometheus
+    user: "1000:1000"
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ${DATA_ROOT}/prometheus:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    restart: unless-stopped
+    networks:
+      - monitoring
+    depends_on:
+      - netdata
+
+  grafana:
+    image: grafana/grafana:12.4.2
+    container_name: grafana
+    user: "1000:1000"
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource
+    volumes:
+      - ${DATA_ROOT}/grafana:/var/lib/grafana
+    restart: unless-stopped
+    networks:
+      - monitoring
+    depends_on:
+      - prometheus
+
+  portainer:
+    image: portainer/portainer-ce:2.40.0
+    container_name: portainer
+    ports:
+      - "9000:9000"
+      - "8443:8443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ${DATA_ROOT}/portainer:/data
+    restart: unless-stopped
+    networks:
+      - monitoring
+
+  samba:
+    image: dockurr/samba:4.22.6
+    hostname: 192.168.68.66
+    container_name: samba
+    environment:
+      NAME: ${SAMBA_NAME}
+    ports:
+      - "445:445"
+    volumes:
+      - ${DATA_ROOT}/samba/share:/storage
+      - ${DATA_ROOT}/samba/users.conf:/etc/samba/users.conf
+      - ${DATA_ROOT}/samba/smb.conf:/etc/samba/smb.conf
+    restart: always
+
+  navidrome:
+    image: deluan/navidrome:0.61.0
+    container_name: navidrome
+    ports:
+      - "4533:4533"
+    restart: unless-stopped
+    environment:
+      ND_SCANSCHEDULE: 1h
+      ND_LOGLEVEL: info
+      ND_SESSIONTIMEOUT: 24h
+      ND_BASEURL: ""
+    volumes:
+      - "${DATA_ROOT}/navidrome/data:/data"
+      - "${DATA_ROOT}/samba/share/Music:/music:ro"
+
+  baikal:
+    image: ckulka/baikal:0.10.1-nginx
+    container_name: baikal
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ${DATA_ROOT}/baikal/config:/var/www/baikal/config
+      - ${DATA_ROOT}/baikal/Specific:/var/www/baikal/Specific
+
+  donetick:
+    image: donetick/donetick:v0.1.79
+    container_name: donetick
+    restart: unless-stopped
+    ports:
+      - 2021:2021
+    volumes:
+      - ${DATA_ROOT}/donetick/data:/donetick-data
+      - ${DATA_ROOT}/donetick/config:/config
+    environment:
+      - DT_ENV=selfhosted
+      - DT_SQLITE_PATH=/donetick-data/donetick.db
+      - TZ=Etc/UTC
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:2021/api/v1/health || exit 1
+      start_period: 1m
+      timeout: 5s
+      interval: 1m
+      retries: 3
+
+  vaultwarden:
+    image: vaultwarden/server:1.37.2
+    container_name: vaultwarden
+    restart: unless-stopped
+    environment:
+      DOMAIN: "https://home.huizehop"
+      # Uncomment after initial setup to disable new signups:
+      SIGNUPS_ALLOWED: "false"
+    volumes:
+      - ${DATA_ROOT}/vaultwarden:/data/
+    networks:
+      - web
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: caddy
+    restart: unless-stopped
+    ports:
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ${DATA_ROOT}/caddy/data:/data
+      - ${DATA_ROOT}/caddy/config:/config
+      - ${DATA_ROOT}/caddy/certs:/certs
+    networks:
+      - web
+
+networks:
+  monitoring:
+    driver: bridge
+  web:
+    driver: bridge
