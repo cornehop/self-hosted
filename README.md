@@ -99,7 +99,7 @@ There is probably no reason to backup the Netdata directory for instance.
 In addition to the local backup, the data is backed up off-site to Scaleway
 Object Storage using `restic`.
 This protects against scenarios where both local HDDs are lost at once (theft, fire).
-The steps are described in [pi-backup-scaleway.md](./docs/pi-backup-scaleway.md).
+The steps are described in [pi-backup-scaleway.md](./docs/scaleway-backup.md).
 
 ### Troubleshooting
 
