@@ -49,6 +49,8 @@ sudo chmod g+s /mnt/data/samba/share
 
 On the devices that need access to the server you need to make sure the DNS for `home.huizehop` resolves to the right IP address.
 
+#### Windows
+
 For Windows edit the `C:\Windows\System32\drivers\etc\hosts` file, add the following line:
 
 ```text
@@ -66,6 +68,21 @@ Then move this file to your local machine (using FileZilla for example).
 On Windows double click the certificate and click `Install Certificate`.
 Choose `Local Machine`, then `Place all certificates in the following store`, `Browse` and select `Trusted Root Certification Authorities`.
 Then click `OK`.
+
+#### Linux
+
+For linux run the following command to add the line to the hosts file:
+
+```shell
+echo "192.168.68.66 home.huizehop" | sudo tee -a /etc/hosts
+```
+
+Then copy the certificate file to the trust store and refresh the trust store:
+
+```shell
+sudo cp ~/Downloads/caddy-ca.crt /etc/ca-certificates/trust-source/anchors/
+sudo update-ca-trust
+```
 
 Finally make sure to remove the certificate from your root folder again.
 
