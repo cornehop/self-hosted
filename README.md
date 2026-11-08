@@ -15,6 +15,7 @@ These services are currently part of the setup:
   - `Netdata` to scrape current system metrics
   - `Prometheus` to store the metrics in a database
   - `Grafana` to visualize the metrics
+  - `Dozzle` to manager containers and view their logs and metrics
 - `Caddy` to create a local reverse proxy
 - `Samba` to provide a network share
 - `Navidrome` to stream my music collection
