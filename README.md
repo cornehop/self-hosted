@@ -138,3 +138,23 @@ docker-compose up -d
 
 This makes the user that runs the docker compose file the owner of the directory in `/mnt/data`.
 Don't run this on the entire directory, as the Baikal service requires the Nginx user as owner.
+
+#### Dozzle does not show RAM usage
+
+At first Dozzle did not show any RAM usage, when checking `docker stats` I saw that the docker engine did not receive those metrics either.
+By default the Raspberry Pi OS seems to have this disabled.
+I was able to resolve that issue using these steps:
+
+Edit the `cmdline` file:
+
+```shell
+sudo nano /boot/firmware/cmdline.txt
+```
+
+Append the following to the line in the file:
+
+```text
+cgroup_enable=cpuset cgroup_enable=memory cgroup_memory=1 swapaccount=1
+```
+
+Save the file and reboot.
