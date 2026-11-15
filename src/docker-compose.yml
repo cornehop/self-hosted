@@ -139,6 +139,23 @@ services:
       interval: 1m
       retries: 3
 
+  actualbudget:
+    image: actualbudget/actual-server:26.11.0-alpine
+    container_name: actualbudget
+    restart: unless-stopped
+    # No host port published on purpose: Actual requires HTTPS (SharedArrayBuffer),
+    # so it is only reachable through Caddy, see the Caddyfile.
+    volumes:
+      - ${DATA_ROOT}/actualbudget:/data
+    healthcheck:
+      test: ["CMD-SHELL", "node src/scripts/health-check.js"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    networks:
+      - web
+
   vaultwarden:
     image: vaultwarden/server:1.37.2
     container_name: vaultwarden

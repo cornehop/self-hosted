@@ -2,3 +2,10 @@ https://home.huizehop {
     tls internal
     reverse_proxy vaultwarden:80
 }
+
+https://actual.huizehop {
+    tls internal
+    # Actual sets the required COOP/COEP headers itself; do not add them here,
+    # duplicate headers cause a SharedArrayBufferMissing error in the browser.
+    reverse_proxy actualbudget:5006
+}
